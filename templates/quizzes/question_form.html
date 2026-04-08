@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }} — EduPlatform{% endblock %}
+{% block content %}
+<div class="breadcrumb">
+    <a href="{% url 'courses:dashboard' %}">Dersler</a>
+    <span class="sep">›</span>
+    <a href="{% url 'courses:detail' quiz.course.pk %}">{{ quiz.course.title }}</a>
+    <span class="sep">›</span>
+    <a href="{% url 'quizzes:detail' quiz.pk %}">{{ quiz.title }}</a>
+    <span class="sep">›</span><span>{{ title }}</span>
+</div>
+
+<div style="max-width:680px;">
+    <div class="page-header"><h1>{{ title }}</h1></div>
+
+    <form method="post">
+        {% csrf_token %}
+        <!-- Question -->
+        <div class="card" style="margin-bottom:20px;">
+            <div class="card-header"><h2>❓ Soru Bilgileri</h2></div>
+            <div class="card-body">
+                {% for field in form %}
+                <div class="form-group">
+                    <label>{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}<ul class="errorlist">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Choices -->
+        <div class="card" style="margin-bottom:20px;">
+            <div class="card-header"><h2>🔘 Şıklar</h2><small style="color:var(--text-muted);">En az 2, en fazla 6 şık. Sadece 1 şık doğru olabilir.</small></div>
+            <div class="card-body">
+                {{ formset.management_form }}
+                {% for choice_form in formset %}
+                <div class="formset-row">
+                    {% if formset.can_delete %}
+                    <div class="delete-row">
+                        {{ choice_form.DELETE }}
+                        <label for="{{ choice_form.DELETE.id_for_label }}" style="font-size:.8rem;color:var(--danger);cursor:pointer;">Sil</label>
+                    </div>
+                    {% endif %}
+                    <div style="display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;">
+                        <div>
+                            <label style="font-size:.85rem;font-weight:600;color:var(--text-muted);">Şık {{ forloop.counter }}</label>
+                            {{ choice_form.text }}
+                            {% if choice_form.text.errors %}<ul class="errorlist">{% for e in choice_form.text.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                        </div>
+                        <div class="form-check" style="flex-shrink:0;">
+                            {{ choice_form.is_correct }}
+                            <label for="{{ choice_form.is_correct.id_for_label }}" style="font-size:.85rem;font-weight:600;color:var(--secondary);">✓ Doğru</label>
+                        </div>
+                    </div>
+                    {{ choice_form.id }}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div style="display:flex;gap:10px;">
+            <button type="submit" class="btn btn-primary">💾 Kaydet</button>
+            <a href="{% url 'quizzes:detail' quiz.pk %}" class="btn btn-ghost">İptal</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

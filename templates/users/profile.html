@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block title %}Profilim — EduPlatform{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>👤 Profilim</h1>
+        <p>Kişisel bilgilerinizi güncelleyin</p>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:280px 1fr;gap:24px;align-items:start;">
+    <!-- Sidebar -->
+    <div class="card">
+        <div class="card-body" style="text-align:center;">
+            {% if user.avatar %}
+            <img src="{{ user.avatar.url }}" alt="Avatar"
+                 style="width:90px;height:90px;border-radius:50%;object-fit:cover;border:3px solid var(--primary-light);margin-bottom:12px;">
+            {% else %}
+            <div style="width:90px;height:90px;border-radius:50%;background:var(--primary-light);display:flex;align-items:center;justify-content:center;font-size:2.5rem;margin:0 auto 12px;">
+                👤
+            </div>
+            {% endif %}
+            <h3 style="font-size:1.1rem;">{{ user.get_full_name|default:user.username }}</h3>
+            <p style="color:var(--text-muted);font-size:.85rem;margin:4px 0;">@{{ user.username }}</p>
+            <span class="role-badge {% if user.is_teacher %}role-teacher{% else %}role-student{% endif %}" style="margin-top:8px;display:inline-flex;">
+                {% if user.is_teacher %}👩‍🏫 Öğretmen{% else %}👨‍🎓 Öğrenci{% endif %}
+            </span>
+            {% if user.bio %}
+            <p style="margin-top:14px;font-size:.9rem;color:var(--text-muted);line-height:1.5;">{{ user.bio }}</p>
+            {% endif %}
+            <hr class="divider">
+            {% if user.is_teacher %}
+            <div style="font-size:.85rem;color:var(--text-muted);">
+                <strong>{{ user.taught_courses.count }}</strong> ders oluşturuldu
+            </div>
+            {% else %}
+            <div style="font-size:.85rem;color:var(--text-muted);">
+                <strong>{{ user.enrollments.count }}</strong> derse kayıtlı
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Form -->
+    <div class="card">
+        <div class="card-header">
+            <h2>✏️ Bilgileri Düzenle</h2>
+        </div>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {% for field in form %}
+                <div class="form-group">
+                    <label>{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}<ul class="errorlist">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                </div>
+                {% endfor %}
+                <button type="submit" class="btn btn-primary">💾 Kaydet</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }} — EduPlatform{% endblock %}
+{% block content %}
+<div class="breadcrumb">
+    <a href="{% url 'courses:dashboard' %}">Dersler</a>
+    <span class="sep">›</span>
+    <a href="{% url 'courses:detail' course.pk %}">{{ course.title }}</a>
+    <span class="sep">›</span><span>{{ title }}</span>
+</div>
+
+<div style="max-width:600px;">
+    <div class="page-header"><h1>{{ title }}</h1></div>
+    <div class="card">
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                {% for field in form %}
+                <div class="form-group">
+                    <label>{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}<ul class="errorlist">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                </div>
+                {% endfor %}
+                <div style="display:flex;gap:10px;">
+                    <button type="submit" class="btn btn-primary">💾 Kaydet</button>
+                    <a href="{% url 'courses:detail' course.pk %}" class="btn btn-ghost">İptal</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

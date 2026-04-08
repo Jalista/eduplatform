@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% block title %}{{ quiz.title }} — EduPlatform{% endblock %}
+{% block content %}
+<div class="breadcrumb">
+    <a href="{% url 'courses:dashboard' %}">Dersler</a>
+    <span class="sep">›</span>
+    <a href="{% url 'courses:detail' quiz.course.pk %}">{{ quiz.course.title }}</a>
+    <span class="sep">›</span><span>{{ quiz.title }}</span>
+</div>
+
+<div class="page-header">
+    <div>
+        <h1>🎯 {{ quiz.title }}</h1>
+        {% if quiz.description %}<p>{{ quiz.description }}</p>{% endif %}
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <a href="{% url 'quizzes:add_question' quiz.pk %}" class="btn btn-primary btn-sm">+ Soru Ekle</a>
+        <a href="{% url 'quizzes:edit' quiz.pk %}" class="btn btn-ghost btn-sm">✏️ Testi Düzenle</a>
+        <a href="{% url 'quizzes:delete' quiz.pk %}" class="btn btn-danger btn-sm">🗑️</a>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 360px;gap:24px;align-items:start;">
+
+    <!-- Questions -->
+    <div>
+        <div class="section-title">❓ Sorular ({{ questions.count }})</div>
+        {% if questions %}
+            {% for question in questions %}
+            <div class="question-block">
+                <div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:12px;">
+                    <div class="q-text" style="margin-bottom:0;">
+                        <span class="badge badge-blue" style="margin-right:8px;">{{ forloop.counter }}</span>
+                        {{ question.text }}
+                    </div>
+                    <div style="display:flex;gap:4px;flex-shrink:0;">
+                        <a href="{% url 'quizzes:edit_question' question.pk %}" class="btn btn-ghost btn-sm">✏️</a>
+                        <a href="{% url 'quizzes:delete_question' question.pk %}" class="btn btn-danger btn-sm">🗑️</a>
+                    </div>
+                </div>
+                <div>
+                    {% for choice in question.choices.all %}
+                    <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:6px;margin-bottom:6px;
+                         {% if choice.is_correct %}background:#ecfdf5;border:1px solid var(--secondary);{% else %}background:var(--bg);border:1px solid var(--border);{% endif %}">
+                        {% if choice.is_correct %}
+                        <span style="color:var(--secondary);font-weight:700;">✓</span>
+                        {% else %}
+                        <span style="color:var(--text-muted);">○</span>
+                        {% endif %}
+                        <span style="font-size:.9rem;">{{ choice.text }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+        <div class="empty-state">
+            <div class="icon">❓</div>
+            <p>Henüz soru eklenmedi.</p>
+            <a href="{% url 'quizzes:add_question' quiz.pk %}" class="btn btn-primary">+ İlk Soruyu Ekle</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Attempts -->
+    <div class="card">
+        <div class="card-header"><h2>📊 Öğrenci Sonuçları</h2><a href="{% url 'quizzes:results_overview' quiz.pk %}" class="btn btn-ghost btn-sm">Tümünü Gör →</a></div>
+        {% if attempts %}
+        <table>
+            <thead><tr><th>Öğrenci</th><th>Puan</th></tr></thead>
+            <tbody>
+            {% for attempt in attempts %}
+            <tr>
+                <td>
+                    <a href="{% url 'quizzes:attempt_detail' attempt.pk %}" style="color:var(--primary);text-decoration:none;font-weight:500;">
+                        {{ attempt.student.get_full_name|default:attempt.student.username }}
+                    </a>
+                    <div style="font-size:.78rem;color:var(--text-muted);">{{ attempt.completed_at|date:"d M H:i" }}</div>
+                </td>
+                <td>
+                    <span class="badge {% if attempt.get_percentage >= 70 %}badge-green{% elif attempt.get_percentage >= 50 %}badge-yellow{% else %}badge-red{% endif %}">
+                        %{{ attempt.get_percentage }}
+                    </span>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state" style="padding:28px;">
+            <div class="icon" style="font-size:2rem;">📊</div>
+            <p>Henüz kimse bu testi çözmedi.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

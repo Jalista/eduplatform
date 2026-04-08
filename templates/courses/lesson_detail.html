@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %}{{ lesson.title }} — EduPlatform{% endblock %}
+{% block content %}
+<div class="breadcrumb">
+    <a href="{% url 'courses:dashboard' %}">Dersler</a>
+    <span class="sep">›</span>
+    <a href="{% url 'courses:detail' lesson.course.pk %}">{{ lesson.course.title }}</a>
+    <span class="sep">›</span><span>{{ lesson.title }}</span>
+</div>
+
+<div style="max-width:760px;">
+    <div class="page-header">
+        <div>
+            <h1>📝 {{ lesson.title }}</h1>
+            <p style="font-size:.85rem;color:var(--text-muted);">📘 {{ lesson.course.title }} · Konu {{ lesson.order }}</p>
+        </div>
+        {% if user.is_teacher %}
+        <div style="display:flex;gap:8px;">
+            <a href="{% url 'courses:edit_lesson' lesson.pk %}" class="btn btn-ghost btn-sm">✏️ Düzenle</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <div class="card-body" style="line-height:1.8;font-size:1rem;white-space:pre-wrap;">{{ lesson.content }}</div>
+    </div>
+
+    <div style="margin-top:20px;display:flex;justify-content:space-between;align-items:center;">
+        <a href="{% url 'courses:detail' lesson.course.pk %}" class="btn btn-ghost">← Derse Dön</a>
+        <p style="color:var(--text-muted);font-size:.82rem;">{{ lesson.created_at|date:"d M Y" }}</p>
+    </div>
+</div>
+{% endblock %}

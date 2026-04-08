@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Giriş Yap — EduPlatform{% endblock %}
+{% block content %}
+<div class="auth-wrapper" style="margin:-32px -24px; min-height:calc(100vh - 0px);">
+    <div class="auth-card">
+        <div class="auth-logo">
+            <div class="logo-big">🎓</div>
+            <h1>EduPlatform</h1>
+            <p>Hesabınıza giriş yapın</p>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            {% for field in form %}
+            <div class="form-group">
+                <label>{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}<ul class="errorlist">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+            </div>
+            {% endfor %}
+            {% if form.non_field_errors %}
+            <div class="alert alert-error">❌ {{ form.non_field_errors.0 }}</div>
+            {% endif %}
+            <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px;">
+                🔐 Giriş Yap
+            </button>
+        </form>
+
+        <hr class="divider">
+        <p style="text-align:center;color:var(--text-muted);font-size:.9rem;">
+            Hesabınız yok mu?
+            <a href="{% url 'users:register' %}" style="color:var(--primary);font-weight:600;">Kayıt Ol</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

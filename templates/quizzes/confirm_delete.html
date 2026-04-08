@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}Sil — EduPlatform{% endblock %}
+{% block content %}
+<div style="max-width:500px;margin:60px auto;">
+    <div class="card" style="text-align:center;">
+        <div class="card-body" style="padding:40px;">
+            <div style="font-size:3rem;margin-bottom:16px;">⚠️</div>
+            <h2 style="font-size:1.3rem;margin-bottom:12px;">Silmek istediğinize emin misiniz?</h2>
+            <p style="color:var(--text-muted);margin-bottom:28px;">
+                <strong>{{ object }}</strong> adlı {{ type }} kalıcı olarak silinecek.
+            </p>
+            <div style="display:flex;gap:12px;justify-content:center;">
+                <form method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">🗑️ Evet, Sil</button>
+                </form>
+                <a href="javascript:history.back()" class="btn btn-ghost">İptal</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% block title %}{{ quiz.title }} — Sonuçlar{% endblock %}
+{% block content %}
+{# Bunu inceleyen kişiye selamlar, ben Yakup :) #}
+
+<div class="breadcrumb">
+    <a href="{% url 'courses:dashboard' %}">Dersler</a>
+    <span class="sep">›</span>
+    <a href="{% url 'courses:detail' quiz.course.pk %}">{{ quiz.course.title }}</a>
+    <span class="sep">›</span>
+    <a href="{% url 'quizzes:detail' quiz.pk %}">{{ quiz.title }}</a>
+    <span class="sep">›</span><span>Tüm Sonuçlar</span>
+</div>
+
+<div class="page-header">
+    <div>
+        <h1>📊 {{ quiz.title }} — Öğrenci Sonuçları</h1>
+        <p>{{ attempts.count }} deneme · {{ quiz.course.title }}</p>
+    </div>
+    <a href="{% url 'quizzes:detail' quiz.pk %}" class="btn btn-ghost btn-sm">← Teste Dön</a>
+</div>
+
+{% if attempts %}
+
+<!-- İstatistik özeti -->
+<div class="grid grid-3" style="margin-bottom:28px;">
+    <div class="stat-card">
+        <span class="stat-label">👥 Toplam Deneme</span>
+        <span class="stat-value">{{ attempts.count }}</span>
+        <span class="stat-desc">öğrenci denemesi</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label">⏰ Süre Doldu</span>
+        <span class="stat-value" style="color:var(--danger);">
+            {{ attempts|length }}
+        </span>
+        <span class="stat-desc">kez süre dolarak teslim edildi</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label">🏆 En Yüksek</span>
+        <span class="stat-value" style="color:var(--secondary);">
+            {% if attempts %}%{{ attempts.0.get_percentage }}{% else %}—{% endif %}
+        </span>
+        <span class="stat-desc">en iyi puan</span>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h2>📋 Tüm Denemeler</h2></div>
+    <table>
+        <thead>
+            <tr>
+                <th>Öğrenci</th>
+                <th>Doğru/Toplam</th>
+                <th>Puan</th>
+                <th>Durum</th>
+                <th>Başlangıç</th>
+                <th>Süre</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for attempt in attempts %}
+        <tr>
+            <td>
+                <div style="font-weight:600;">{{ attempt.student.get_full_name|default:attempt.student.username }}</div>
+                <div style="font-size:.78rem;color:var(--text-muted);">@{{ attempt.student.username }}</div>
+            </td>
+            <td>
+                <span style="font-weight:600;">{{ attempt.correct_answers }}</span>
+                <span style="color:var(--text-muted);">/{{ attempt.total_questions }}</span>
+            </td>
+            <td>
+                <span class="badge {% if attempt.get_percentage >= 70 %}badge-green{% elif attempt.get_percentage >= 50 %}badge-yellow{% else %}badge-red{% endif %}">
+                    %{{ attempt.get_percentage }}
+                </span>
+            </td>
+            <td>
+                {% if attempt.timed_out %}
+                <span class="badge badge-red">⏰ Süre Doldu</span>
+                {% else %}
+                <span class="badge badge-green">✅ Normal</span>
+                {% endif %}
+            </td>
+            <td style="font-size:.82rem;color:var(--text-muted);">
+                {{ attempt.started_at|date:"d M Y H:i" }}
+            </td>
+            <td style="font-size:.85rem;color:var(--text-muted);">
+                {% if attempt.get_duration_seconds %}
+                    {% with dur=attempt.get_duration_seconds %}
+                        {% if dur >= 60 %}{{ dur|floatformat:0 }}s{% else %}{{ dur }}s{% endif %}
+                    {% endwith %}
+                {% else %}—{% endif %}
+            </td>
+            <td>
+                <a href="{% url 'quizzes:attempt_detail' attempt.pk %}" class="btn btn-ghost btn-sm">Detay →</a>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% else %}
+<div class="empty-state">
+    <div class="icon">📊</div>
+    <p>Bu test için henüz sonuç bulunmuyor.</p>
+</div>
+{% endif %}
+
+{% endblock %}

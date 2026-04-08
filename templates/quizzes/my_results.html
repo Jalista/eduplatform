@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block title %}Sonuçlarım — EduPlatform{% endblock %}
+{% block content %}
+{# Bunu inceleyen kişiye selamlar, ben Yakup :) #}
+
+<div class="page-header">
+    <div>
+        <h1>📊 Test Sonuçlarım</h1>
+        <p>Tüm quiz denemelerinizin geçmişi</p>
+    </div>
+    <a href="{% url 'courses:dashboard' %}" class="btn btn-ghost btn-sm">← Derslerime Dön</a>
+</div>
+
+{% if attempts %}
+
+<!-- Özet istatistikler -->
+{% with total_count=attempts.count %}
+<div class="grid grid-3" style="margin-bottom:28px;">
+    <div class="stat-card">
+        <span class="stat-label">🎯 Toplam Deneme</span>
+        <span class="stat-value">{{ total_count }}</span>
+        <span class="stat-desc">tamamlanan test</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label">✅ En Yüksek Puan</span>
+        <span class="stat-value" style="color:var(--secondary);">
+            %{% with best=attempts|dictsort:"score"|last %}{{ best.get_percentage }}{% endwith %}
+        </span>
+        <span class="stat-desc">en iyi sonuç</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label">📚 Ders Sayısı</span>
+        <span class="stat-value">
+            {{ attempts|dictsortreversed:"quiz__course"|length }}
+        </span>
+        <span class="stat-desc">farklı derste test çözüldü</span>
+    </div>
+</div>
+{% endwith %}
+
+<div class="card">
+    <div class="card-header"><h2>📋 Tüm Denemeler</h2></div>
+    <table>
+        <thead>
+            <tr>
+                <th>Test</th>
+                <th>Ders</th>
+                <th>Doğru/Toplam</th>
+                <th>Puan</th>
+                <th>Durum</th>
+                <th>Tarih</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for attempt in attempts %}
+        <tr>
+            <td style="font-weight:600;">{{ attempt.quiz.title }}</td>
+            <td style="color:var(--text-muted);font-size:.88rem;">{{ attempt.quiz.course.title }}</td>
+            <td>
+                <span style="font-weight:600;">{{ attempt.correct_answers }}</span>
+                <span style="color:var(--text-muted);">/{{ attempt.total_questions }}</span>
+            </td>
+            <td>
+                <span class="badge {% if attempt.get_percentage >= 70 %}badge-green{% elif attempt.get_percentage >= 50 %}badge-yellow{% else %}badge-red{% endif %}">
+                    %{{ attempt.get_percentage }}
+                </span>
+            </td>
+            <td>
+                {% if attempt.timed_out %}
+                <span class="badge badge-red">⏰ Süre Doldu</span>
+                {% else %}
+                <span class="badge badge-green">✅ Tamamlandı</span>
+                {% endif %}
+            </td>
+            <td style="color:var(--text-muted);font-size:.82rem;white-space:nowrap;">
+                {{ attempt.started_at|date:"d M Y H:i" }}
+            </td>
+            <td>
+                <a href="{% url 'quizzes:result' attempt.pk %}" class="btn btn-ghost btn-sm">Detay →</a>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% else %}
+<div class="empty-state">
+    <div class="icon">📊</div>
+    <p>Henüz hiç test çözmediniz.</p>
+    <a href="{% url 'courses:dashboard' %}" class="btn btn-primary">Derslere Git</a>
+</div>
+{% endif %}
+
+{% endblock %}

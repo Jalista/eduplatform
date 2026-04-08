@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+{% block title %}{{ quiz.title }} — Test Çöz{% endblock %}
+{% block content %}
+{# Bunu inceleyen kişiye selamlar, ben Yakup :) #}
+
+<div class="breadcrumb">
+    <a href="{% url 'courses:dashboard' %}">Derslerim</a>
+    <span class="sep">›</span>
+    <a href="{% url 'courses:detail' quiz.course.pk %}">{{ quiz.course.title }}</a>
+    <span class="sep">›</span>
+    <a href="{% url 'quizzes:detail' quiz.pk %}">{{ quiz.title }}</a>
+    <span class="sep">›</span><span>Test Çöz</span>
+</div>
+
+<div style="max-width:720px;">
+
+    <!-- Header + Timer -->
+    <div class="page-header" style="align-items:center;">
+        <div>
+            <h1>📝 {{ quiz.title }}</h1>
+            <p style="color:var(--text-muted);">{{ questions.count }} soru · Tüm soruları cevaplayın</p>
+        </div>
+        {% if time_limit_seconds > 0 %}
+        <div id="timer-box" style="
+            background:var(--primary);color:#fff;
+            border-radius:12px;padding:12px 22px;
+            text-align:center;min-width:110px;
+            box-shadow:0 4px 12px rgba(79,70,229,.3);
+            transition:background .5s;">
+            <div style="font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;opacity:.85;margin-bottom:2px;">⏱ Kalan Süre</div>
+            <div id="timer-display" style="font-size:1.7rem;font-weight:800;letter-spacing:.02em;">--:--</div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Progress bar -->
+    <div style="background:var(--border);border-radius:20px;height:6px;margin-bottom:6px;overflow:hidden;">
+        <div id="progress-bar" style="background:var(--primary);height:100%;width:0%;transition:width .3s;border-radius:20px;"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:24px;">
+        <span style="font-size:.82rem;color:var(--text-muted);"><span id="answered-count">0</span>/{{ questions.count }} cevaplandı</span>
+        {% if time_limit_seconds > 0 %}
+        <span style="font-size:.82rem;color:var(--text-muted);">Süre: {{ quiz.time_limit_minutes }} dakika</span>
+        {% endif %}
+    </div>
+
+    <form method="post" id="quiz-form">
+        {% csrf_token %}
+        <input type="hidden" name="timed_out" id="timed_out_field" value="0">
+
+        {% for question in questions %}
+        <div class="question-block" id="q-block-{{ forloop.counter }}">
+            <div class="q-text">
+                <span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;
+                      background:var(--primary);color:#fff;border-radius:50%;font-size:.8rem;font-weight:700;
+                      margin-right:10px;flex-shrink:0;">{{ forloop.counter }}</span>
+                {{ question.text }}
+            </div>
+            <div>
+                {% for choice in question.choices.all %}
+                <label class="choice-option" for="choice_{{ question.pk }}_{{ choice.pk }}"
+                       id="label_{{ question.pk }}_{{ choice.pk }}">
+                    <input
+                        type="radio"
+                        name="question_{{ question.pk }}"
+                        id="choice_{{ question.pk }}_{{ choice.pk }}"
+                        value="{{ choice.pk }}"
+                        data-qnum="{{ forloop.parentloop.counter }}"
+                        onchange="onAnswer(this)"
+                    >
+                    <span>{{ choice.text }}</span>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+            <a href="{% url 'quizzes:detail' quiz.pk %}" class="btn btn-ghost"
+               onclick="return confirm('Testi yarıda bırakmak istediğinize emin misiniz?')">↩ Geri Dön</a>
+            <button type="submit" class="btn btn-secondary" id="submit-btn" onclick="return confirmSubmit()">
+                ✅ Testi Tamamla
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Timeout overlay -->
+<div id="timeout-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:999;
+     align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:16px;padding:40px;text-align:center;max-width:380px;box-shadow:0 20px 40px rgba(0,0,0,.3);">
+        <div style="font-size:3rem;margin-bottom:12px;">⏰</div>
+        <h2 style="margin-bottom:8px;color:var(--danger);">Süre Doldu!</h2>
+        <p style="color:var(--text-muted);margin-bottom:20px;">Test otomatik olarak teslim ediliyor...</p>
+        <div style="background:var(--border);border-radius:8px;height:6px;overflow:hidden;">
+            <div id="submit-progress" style="background:var(--primary);height:100%;width:0%;transition:width 2s linear;"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Bunu inceleyen kişiye selamlar, ben Yakup :)
+    const TOTAL = {{ questions.count }};
+    const TIME_LIMIT_SECONDS = {{ time_limit_seconds }};
+    let answered = new Set();
+    let timerInterval = null;
+    let secondsLeft = TIME_LIMIT_SECONDS;
+
+    // ── Cevap takibi ────────────────────────────────────────────────
+    function onAnswer(input) {
+        const qnum = input.dataset.qnum;
+        answered.add(qnum);
+        document.getElementById('answered-count').textContent = answered.size;
+        const pct = (answered.size / TOTAL) * 100;
+        document.getElementById('progress-bar').style.width = pct + '%';
+
+        // Aynı sorunun önceki seçimini temizle, yenisini vurgula
+        document.querySelectorAll(`input[name="${input.name}"]`).forEach(r => {
+            const lbl = r.closest('.choice-option');
+            lbl.style.borderColor = '';
+            lbl.style.background = '';
+        });
+        const lbl = input.closest('.choice-option');
+        lbl.style.borderColor = 'var(--primary)';
+        lbl.style.background = 'var(--primary-light)';
+    }
+
+    // ── Manuel gönderim onayı ───────────────────────────────────────
+    function confirmSubmit() {
+        if (answered.size < TOTAL) {
+            return confirm(`${TOTAL - answered.size} soru cevapsız kaldı. Yine de göndermek istiyor musunuz?`);
+        }
+        return true;
+    }
+
+    // ── Geri sayım ──────────────────────────────────────────────────
+    function formatTime(secs) {
+        const m = String(Math.floor(secs / 60)).padStart(2, '0');
+        const s = String(secs % 60).padStart(2, '0');
+        return `${m}:${s}`;
+    }
+
+    function submitOnTimeout() {
+        clearInterval(timerInterval);
+
+        // Overlay göster
+        const overlay = document.getElementById('timeout-overlay');
+        overlay.style.display = 'flex';
+        setTimeout(() => {
+            document.getElementById('submit-progress').style.width = '100%';
+        }, 50);
+
+        // 2.1 saniye sonra formu gönder
+        setTimeout(() => {
+            document.getElementById('timed_out_field').value = '1';
+            document.getElementById('quiz-form').submit();
+        }, 2100);
+    }
+
+    function startTimer() {
+        const display = document.getElementById('timer-display');
+        const box = document.getElementById('timer-box');
+
+        display.textContent = formatTime(secondsLeft);
+
+        timerInterval = setInterval(() => {
+            secondsLeft--;
+
+            if (secondsLeft <= 0) {
+                display.textContent = '00:00';
+                submitOnTimeout();
+                return;
+            }
+
+            display.textContent = formatTime(secondsLeft);
+
+            // Son 60 saniyede sarıya dön
+            if (secondsLeft <= 60 && secondsLeft > 10) {
+                box.style.background = '#d97706';
+            }
+            // Son 10 saniyede kırmızıya dön + titreşim
+            if (secondsLeft <= 10) {
+                box.style.background = 'var(--danger)';
+                box.style.animation = 'pulse 0.5s ease-in-out infinite alternate';
+            }
+        }, 1000);
+    }
+
+    if (TIME_LIMIT_SECONDS > 0) {
+        startTimer();
+    }
+
+    // Titreşim animasyonu
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes pulse {
+            from { transform: scale(1); }
+            to   { transform: scale(1.04); }
+        }
+    `;
+    document.head.appendChild(style);
+</script>
+{% endblock %}

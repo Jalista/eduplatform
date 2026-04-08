@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block title %}{{ quiz.title }} — EduPlatform{% endblock %}
+{% block content %}
+<div class="breadcrumb">
+    <a href="{% url 'courses:dashboard' %}">Derslerim</a>
+    <span class="sep">›</span>
+    <a href="{% url 'courses:detail' quiz.course.pk %}">{{ quiz.course.title }}</a>
+    <span class="sep">›</span><span>{{ quiz.title }}</span>
+</div>
+
+<div style="max-width:700px;">
+    <div class="page-header">
+        <div>
+            <h1>🎯 {{ quiz.title }}</h1>
+            {% if quiz.description %}<p>{{ quiz.description }}</p>{% endif %}
+            <p style="font-size:.85rem;color:var(--text-muted);margin-top:6px;">{{ questions.count }} soru · {% if quiz.time_limit_minutes > 0 %}⏱ {{ quiz.time_limit_minutes }} dakika{% else %}⏱ Süresiz{% endif %}</p>
+        </div>
+    </div>
+
+    <!-- Start quiz -->
+    {% if questions %}
+    <div class="card" style="margin-bottom:24px;">
+        <div class="card-body" style="text-align:center;padding:32px;">
+            <div style="font-size:2.5rem;margin-bottom:12px;">📝</div>
+            <h2 style="font-size:1.2rem;margin-bottom:8px;">Teste başlamaya hazır mısınız?</h2>
+            <p style="color:var(--text-muted);margin-bottom:20px;">{{ questions.count }} soruyu cevaplayın ve anında sonucunuzu görün.</p>
+            <a href="{% url 'quizzes:take' quiz.pk %}" class="btn btn-primary">🚀 Teste Başla</a> <a href="{% url 'quizzes:my_results' %}" class="btn btn-ghost" style="margin-left:8px;">📊 Tüm Sonuçlarım</a>
+        </div>
+    </div>
+    {% else %}
+    <div class="empty-state card" style="padding:40px;">
+        <div class="icon">🚧</div>
+        <p>Bu test henüz hazırlanmamış.</p>
+    </div>
+    {% endif %}
+
+    <!-- Past attempts -->
+    {% if past_attempts %}
+    <div class="section-title">📊 Geçmiş Denemelerim</div>
+    <div class="card">
+        <table>
+            <thead><tr><th>Tarih</th><th>Doğru</th><th>Puan</th><th></th></tr></thead>
+            <tbody>
+            {% for attempt in past_attempts %}
+            <tr>
+                <td style="color:var(--text-muted);font-size:.85rem;">{{ attempt.completed_at|date:"d M Y H:i" }}</td>
+                <td>{{ attempt.correct_answers }}/{{ attempt.total_questions }}</td>
+                <td>
+                    <span class="badge {% if attempt.get_percentage >= 70 %}badge-green{% elif attempt.get_percentage >= 50 %}badge-yellow{% else %}badge-red{% endif %}">
+                        %{{ attempt.get_percentage }}
+                    </span>
+                </td>
+                <td><a href="{% url 'quizzes:result' attempt.pk %}" class="btn btn-ghost btn-sm">Sonucu Gör</a></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

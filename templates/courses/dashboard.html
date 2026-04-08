@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% block title %}Derslerim — EduPlatform{% endblock %}
+{% block content %}
+
+{% if is_teacher %}
+<!-- TEACHER DASHBOARD -->
+<div class="page-header">
+    <div>
+        <h1>📚 Derslerim</h1>
+        <p>Oluşturduğunuz dersleri yönetin</p>
+    </div>
+    <a href="{% url 'courses:create' %}" class="btn btn-primary">+ Yeni Ders Oluştur</a>
+</div>
+
+{% if courses %}
+<div class="grid grid-2">
+    {% for course in courses %}
+    <div class="course-card">
+        <div>
+            <h3>📘 {{ course.title }}</h3>
+            <p>{{ course.description|truncatewords:20 }}</p>
+        </div>
+        <div class="meta">
+            <span class="meta-item">👥 {{ course.get_enrolled_count }} öğrenci</span>
+            <span class="meta-item">📝 {{ course.lessons.count }} konu</span>
+            <span class="meta-item">🎯 {{ course.quizzes.count }} test</span>
+        </div>
+        <div class="actions">
+            <a href="{% url 'courses:detail' course.pk %}" class="btn btn-primary btn-sm">Dersi Yönet</a>
+            <a href="{% url 'courses:edit' course.pk %}" class="btn btn-ghost btn-sm">✏️ Düzenle</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="icon">📚</div>
+    <p>Henüz ders oluşturmadınız.</p>
+    <a href="{% url 'courses:create' %}" class="btn btn-primary">+ İlk Dersimi Oluştur</a>
+</div>
+{% endif %}
+
+{% else %}
+<!-- STUDENT DASHBOARD -->
+<div class="page-header">
+    <div>
+        <h1>🎓 Öğrenme Paneli</h1>
+        <p>Kayıtlı dersleriniz ve mevcut dersler</p>
+    </div>
+</div>
+
+<!-- Enrolled Courses -->
+<div class="section-title">📚 Kayıtlı Derslerim</div>
+{% if enrollments %}
+<div class="grid grid-2" style="margin-bottom:36px;">
+    {% for enrollment in enrollments %}
+    <div class="course-card">
+        <h3>📘 {{ enrollment.course.title }}</h3>
+        <p>{{ enrollment.course.description|truncatewords:20 }}</p>
+        <div class="meta">
+            <span class="meta-item">👩‍🏫 {{ enrollment.course.teacher.get_full_name|default:enrollment.course.teacher.username }}</span>
+            <span class="meta-item">📝 {{ enrollment.course.lessons.count }} konu</span>
+            <span class="meta-item">🎯 {{ enrollment.course.quizzes.count }} test</span>
+        </div>
+        <div class="actions">
+            <a href="{% url 'courses:detail' enrollment.course.pk %}" class="btn btn-primary btn-sm">Derse Git →</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state" style="padding:32px 24px;margin-bottom:28px;">
+    <div class="icon">😕</div>
+    <p>Henüz hiçbir derse kayıt olmadınız.</p>
+</div>
+{% endif %}
+
+<!-- Available Courses -->
+{% if available_courses %}
+<hr class="divider">
+<div class="section-title">🌐 Mevcut Dersler</div>
+<div class="grid grid-2">
+    {% for course in available_courses %}
+    <div class="course-card">
+        <h3>📗 {{ course.title }}</h3>
+        <p>{{ course.description|truncatewords:20 }}</p>
+        <div class="meta">
+            <span class="meta-item">👩‍🏫 {{ course.teacher.get_full_name|default:course.teacher.username }}</span>
+            <span class="meta-item">👥 {{ course.get_enrolled_count }} öğrenci</span>
+        </div>
+        <div class="actions">
+            <form method="post" action="{% url 'courses:enroll' course.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-secondary btn-sm">✅ Derse Kayıt Ol</button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endif %}
+
+{% endblock %}

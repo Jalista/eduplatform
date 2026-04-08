@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+{% block title %}Test Sonucu — EduPlatform{% endblock %}
+{% block content %}
+{# Bunu inceleyen kişiye selamlar, ben Yakup :) #}
+
+<div class="breadcrumb">
+    <a href="{% url 'courses:dashboard' %}">Derslerim</a>
+    <span class="sep">›</span>
+    <a href="{% url 'courses:detail' attempt.quiz.course.pk %}">{{ attempt.quiz.course.title }}</a>
+    <span class="sep">›</span>
+    <a href="{% url 'quizzes:detail' attempt.quiz.pk %}">{{ attempt.quiz.title }}</a>
+    <span class="sep">›</span><span>Sonuç</span>
+</div>
+
+<div style="max-width:720px;">
+
+    <!-- Score card -->
+    <div class="card" style="margin-bottom:28px;">
+        <div class="card-body" style="text-align:center;padding:36px 24px;">
+
+            {% if attempt.timed_out %}
+            <div style="background:#fff7ed;border:1px solid #fdba74;border-radius:10px;padding:10px 16px;
+                        margin-bottom:20px;font-size:.9rem;color:#92400e;display:inline-flex;align-items:center;gap:8px;">
+                ⏰ Süre dolduğu için test otomatik teslim edildi.
+            </div>
+            {% endif %}
+
+            {% with pct=attempt.get_percentage %}
+            <div class="score-circle {% if pct >= 70 %}score-high{% elif pct >= 50 %}score-mid{% else %}score-low{% endif %}">
+                <span class="score-pct">%{{ pct }}</span>
+                <span class="score-label">PUAN</span>
+            </div>
+
+            <h2 style="font-size:1.4rem;margin-bottom:8px;">
+                {% if pct >= 70 %}🎉 Tebrikler!{% elif pct >= 50 %}👍 İyi İş!{% else %}📚 Biraz Daha Çalış{% endif %}
+            </h2>
+            <p style="color:var(--text-muted);margin-bottom:20px;">
+                {{ attempt.total_questions }} sorudan <strong>{{ attempt.correct_answers }}</strong> tanesini doğru yaptınız.
+            </p>
+
+            <div style="display:flex;justify-content:center;gap:28px;flex-wrap:wrap;margin-bottom:20px;">
+                <div style="text-align:center;">
+                    <div style="font-size:1.8rem;font-weight:800;color:var(--secondary);">{{ attempt.correct_answers }}</div>
+                    <div style="font-size:.8rem;color:var(--text-muted);">✅ Doğru</div>
+                </div>
+                <div style="text-align:center;">
+                    {% with wrong=attempt.total_questions|add:"-"|add:attempt.correct_answers %}
+                    <div style="font-size:1.8rem;font-weight:800;color:var(--danger);">
+                        {{ attempt.total_questions|add:"-1" }}{% comment %}placeholder{% endcomment %}
+                        <span id="wrong-count"></span>
+                    </div>
+                    {% endwith %}
+                    <div style="font-size:.8rem;color:var(--text-muted);">❌ Yanlış</div>
+                </div>
+                <div style="text-align:center;">
+                    <div style="font-size:1.8rem;font-weight:800;color:var(--primary);">{{ attempt.total_questions }}</div>
+                    <div style="font-size:.8rem;color:var(--text-muted);">📋 Toplam</div>
+                </div>
+                {% if attempt.get_duration_seconds %}
+                <div style="text-align:center;">
+                    <div style="font-size:1.8rem;font-weight:800;color:var(--text-muted);">
+                        {% with dur=attempt.get_duration_seconds %}
+                        {% if dur >= 60 %}{{ dur|divisibleby:60 }}{% if dur >= 60 %}{{ dur|add:"-0" }}{% endif %}{% endif %}
+                        {{ dur }}s
+                        {% endwith %}
+                    </div>
+                    <div style="font-size:.8rem;color:var(--text-muted);">⏱ Süre</div>
+                </div>
+                {% endif %}
+            </div>
+            {% endwith %}
+
+            {% if not is_teacher_view %}
+            <div style="display:flex;justify-content:center;gap:10px;flex-wrap:wrap;">
+                <a href="{% url 'quizzes:take' attempt.quiz.pk %}" class="btn btn-primary">🔄 Tekrar Çöz</a>
+                <a href="{% url 'quizzes:my_results' %}" class="btn btn-ghost">📊 Tüm Sonuçlarım</a>
+                <a href="{% url 'quizzes:detail' attempt.quiz.pk %}" class="btn btn-ghost">← Teste Dön</a>
+            </div>
+            {% else %}
+            <div style="margin-top:12px;">
+                <p style="color:var(--text-muted);font-size:.85rem;">
+                    👨‍🎓 <strong>{{ attempt.student.get_full_name|default:attempt.student.username }}</strong>
+                    · {{ attempt.started_at|date:"d M Y H:i" }}
+                    {% if attempt.timed_out %}<span style="color:var(--danger);"> · ⏰ Süre doldu</span>{% endif %}
+                </p>
+                <a href="{% url 'quizzes:results_overview' attempt.quiz.pk %}" class="btn btn-ghost btn-sm" style="margin-top:10px;">← Tüm Sonuçlara Dön</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Detailed answers -->
+    <div class="section-title">📋 Cevap Detayları</div>
+    {% for answer in answers %}
+    <div class="question-block" style="margin-bottom:16px;">
+        <div class="q-text">
+            <span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;
+                  background:{% if answer.is_correct %}var(--secondary){% else %}var(--danger){% endif %};
+                  color:#fff;border-radius:50%;font-size:.78rem;font-weight:700;margin-right:10px;flex-shrink:0;">
+                {{ forloop.counter }}
+            </span>
+            {{ answer.question.text }}
+        </div>
+
+        {% for choice in answer.question.choices.all %}
+        <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-radius:8px;margin-bottom:6px;cursor:default;
+            {% if choice.is_correct %}background:#ecfdf5;border:1.5px solid var(--secondary);
+            {% elif answer.selected_choice == choice and not choice.is_correct %}background:#fef2f2;border:1.5px solid var(--danger);
+            {% else %}background:var(--bg);border:1px solid var(--border);{% endif %}">
+            <span style="width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+                font-size:.75rem;font-weight:700;flex-shrink:0;
+                {% if choice.is_correct %}background:var(--secondary);color:#fff;
+                {% elif answer.selected_choice == choice %}background:var(--danger);color:#fff;
+                {% else %}background:var(--border);color:var(--text-muted);{% endif %}">
+                {% if choice.is_correct %}✓
+                {% elif answer.selected_choice == choice %}✗
+                {% else %}○{% endif %}
+            </span>
+            <span style="font-size:.9rem;{% if choice.is_correct %}font-weight:600;{% endif %}flex:1;">{{ choice.text }}</span>
+            {% if answer.selected_choice == choice and not choice.is_correct %}
+                <span style="font-size:.78rem;color:var(--danger);white-space:nowrap;">← Seçiminiz</span>
+            {% endif %}
+            {% if choice.is_correct and answer.selected_choice != choice %}
+                <span style="font-size:.78rem;color:var(--secondary);white-space:nowrap;">← Doğru cevap</span>
+            {% endif %}
+        </div>
+        {% endfor %}
+
+        <div style="margin-top:8px;font-size:.85rem;">
+            {% if answer.is_correct %}
+            <span style="color:var(--secondary);font-weight:600;">✅ Doğru</span>
+            {% elif not answer.selected_choice %}
+            <span style="color:var(--text-muted);">⚪ Boş bırakıldı</span>
+            {% else %}
+            <span style="color:var(--danger);font-weight:600;">❌ Yanlış</span>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+// Doğru/yanlış sayısını JS ile hesapla (template tag limitation bypass)
+const correct = {{ attempt.correct_answers }};
+const total = {{ attempt.total_questions }};
+const wrongEl = document.getElementById('wrong-count');
+if (wrongEl) wrongEl.textContent = total - correct;
+// wrong-count'un parent div'ini de düzelt
+const wrongDiv = wrongEl ? wrongEl.closest('[style*="1.8rem"]') : null;
+if (wrongDiv) wrongDiv.innerHTML = `<span style="font-size:1.8rem;font-weight:800;color:var(--danger);">${total - correct}</span>`;
+</script>
+{% endblock %}

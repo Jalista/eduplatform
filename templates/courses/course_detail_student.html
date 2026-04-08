@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% block title %}{{ course.title }} — EduPlatform{% endblock %}
+{% block content %}
+<div class="breadcrumb">
+    <a href="{% url 'courses:dashboard' %}">Derslerim</a>
+    <span class="sep">›</span><span>{{ course.title }}</span>
+</div>
+
+<div class="page-header">
+    <div>
+        <h1>📘 {{ course.title }}</h1>
+        <p>{{ course.description }}</p>
+        <p style="margin-top:6px;font-size:.85rem;color:var(--text-muted);">
+            👩‍🏫 Öğretmen: <strong>{{ course.teacher.get_full_name|default:course.teacher.username }}</strong>
+        </p>
+    </div>
+    <form method="post" action="{% url 'courses:unenroll' course.pk %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-ghost btn-sm"
+            onclick="return confirm('Bu dersten ayrılmak istediğinize emin misiniz?')">
+            ↩️ Dersten Ayrıl
+        </button>
+    </form>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start;">
+
+    <!-- LESSONS -->
+    <div class="card">
+        <div class="card-header"><h2>📝 Konular</h2></div>
+        {% if lessons %}
+        <div style="padding:8px 0;">
+            {% for lesson in lessons %}
+            <a href="{% url 'courses:lesson_detail' lesson.pk %}"
+               style="display:flex;align-items:center;gap:12px;padding:14px 20px;text-decoration:none;color:var(--text);border-bottom:1px solid var(--border);transition:background .15s;"
+               onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''">
+                <span style="width:28px;height:28px;border-radius:50%;background:var(--primary-light);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;flex-shrink:0;">
+                    {{ lesson.order }}
+                </span>
+                <span style="font-weight:500;">{{ lesson.title }}</span>
+                <span style="margin-left:auto;color:var(--text-muted);font-size:.9rem;">›</span>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="icon">📝</div>
+            <p>Henüz konu eklenmemiş.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- QUIZZES -->
+    <div class="card">
+        <div class="card-header"><h2>🎯 Testler</h2></div>
+        {% if quizzes %}
+        <div style="padding:16px;">
+            {% for quiz in quizzes %}
+            <div style="padding:16px;border:1px solid var(--border);border-radius:8px;margin-bottom:10px;">
+                <div style="display:flex;align-items:start;justify-content:space-between;gap:10px;">
+                    <div>
+                        <h3 style="font-size:1rem;font-weight:600;">{{ quiz.title }}</h3>
+                        {% if quiz.description %}<p style="color:var(--text-muted);font-size:.85rem;margin-top:4px;">{{ quiz.description }}</p>{% endif %}
+                        <p style="font-size:.82rem;color:var(--text-muted);margin-top:6px;">{{ quiz.get_question_count }} soru</p>
+                    </div>
+                    <a href="{% url 'quizzes:detail' quiz.pk %}" class="btn btn-primary btn-sm" style="flex-shrink:0;">Teste Git →</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="icon">🎯</div>
+            <p>Henüz test oluşturulmamış.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

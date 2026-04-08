@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% block title %}{{ course.title }} — EduPlatform{% endblock %}
+{% block content %}
+<div class="breadcrumb">
+    <a href="{% url 'courses:dashboard' %}">Dersler</a>
+    <span class="sep">›</span><span>{{ course.title }}</span>
+</div>
+
+<div class="page-header">
+    <div>
+        <h1>📘 {{ course.title }}</h1>
+        <p>{{ course.description }}</p>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <a href="{% url 'courses:edit' course.pk %}" class="btn btn-ghost btn-sm">✏️ Düzenle</a>
+        <a href="{% url 'courses:delete' course.pk %}" class="btn btn-danger btn-sm">🗑️ Sil</a>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="grid grid-3" style="margin-bottom:28px;">
+    <div class="stat-card">
+        <span class="stat-label">👥 Öğrenci</span>
+        <span class="stat-value">{{ course.get_enrolled_count }}</span>
+        <span class="stat-desc">kayıtlı öğrenci</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label">📝 Konu</span>
+        <span class="stat-value">{{ lessons.count }}</span>
+        <span class="stat-desc">içerik eklendi</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-label">🎯 Test</span>
+        <span class="stat-value">{{ quizzes.count }}</span>
+        <span class="stat-desc">test oluşturuldu</span>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start;">
+
+    <!-- LESSONS -->
+    <div class="card">
+        <div class="card-header">
+            <h2>📝 Konular</h2>
+            <a href="{% url 'courses:add_lesson' course.pk %}" class="btn btn-primary btn-sm">+ Konu Ekle</a>
+        </div>
+        {% if lessons %}
+        <table>
+            <thead><tr><th>#</th><th>Başlık</th><th>İşlemler</th></tr></thead>
+            <tbody>
+            {% for lesson in lessons %}
+            <tr>
+                <td><span class="badge badge-blue">{{ lesson.order }}</span></td>
+                <td><a href="{% url 'courses:lesson_detail' lesson.pk %}" style="color:var(--primary);text-decoration:none;font-weight:500;">{{ lesson.title }}</a></td>
+                <td>
+                    <div style="display:flex;gap:4px;">
+                        <a href="{% url 'courses:edit_lesson' lesson.pk %}" class="btn btn-ghost btn-sm">✏️</a>
+                        <a href="{% url 'courses:delete_lesson' lesson.pk %}" class="btn btn-danger btn-sm">🗑️</a>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <div class="icon">📝</div>
+            <p>Henüz konu eklenmedi.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- QUIZZES -->
+    <div class="card">
+        <div class="card-header">
+            <h2>🎯 Testler</h2>
+            <a href="{% url 'quizzes:create' course.pk %}" class="btn btn-primary btn-sm">+ Test Oluştur</a>
+        </div>
+        {% if quizzes %}
+        <table>
+            <thead><tr><th>Test</th><th>Sorular</th><th>İşlemler</th></tr></thead>
+            <tbody>
+            {% for quiz in quizzes %}
+            <tr>
+                <td><a href="{% url 'quizzes:detail' quiz.pk %}" style="color:var(--primary);text-decoration:none;font-weight:500;">{{ quiz.title }}</a></td>
+                <td><span class="badge badge-blue">{{ quiz.get_question_count }}</span></td>
+                <td>
+                    <div style="display:flex;gap:4px;">
+                        <a href="{% url 'quizzes:detail' quiz.pk %}" class="btn btn-ghost btn-sm">👁️</a>
+                        <a href="{% url 'quizzes:delete' quiz.pk %}" class="btn btn-danger btn-sm">🗑️</a>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <div class="icon">🎯</div>
+            <p>Henüz test oluşturulmadı.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Enrolled Students -->
+{% if enrollments %}
+<div class="card" style="margin-top:24px;">
+    <div class="card-header"><h2>👥 Kayıtlı Öğrenciler</h2></div>
+    <table>
+        <thead><tr><th>Ad Soyad</th><th>Kullanıcı Adı</th><th>E-posta</th><th>Kayıt Tarihi</th></tr></thead>
+        <tbody>
+        {% for enrollment in enrollments %}
+        <tr>
+            <td>{{ enrollment.student.get_full_name|default:"—" }}</td>
+            <td><span class="badge badge-blue">@{{ enrollment.student.username }}</span></td>
+            <td>{{ enrollment.student.email }}</td>
+            <td style="color:var(--text-muted);font-size:.85rem;">{{ enrollment.enrolled_at|date:"d M Y" }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{% endblock %}

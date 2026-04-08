@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block title %}Kayıt Ol — EduPlatform{% endblock %}
+{% block content %}
+<div class="auth-wrapper" style="margin:-32px -24px; min-height:calc(100vh);">
+    <div class="auth-card">
+        <div class="auth-logo">
+            <div class="logo-big">🎓</div>
+            <h1>EduPlatform</h1>
+            <p>Yeni hesap oluşturun</p>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            {% for field in form %}
+            <div class="form-group">
+                <label>{{ field.label }}</label>
+                {{ field }}
+                {% if field.help_text %}<small style="color:var(--text-muted);font-size:.8rem;">{{ field.help_text }}</small>{% endif %}
+                {% if field.errors %}<ul class="errorlist">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+            </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px;">
+                ✨ Kayıt Ol
+            </button>
+        </form>
+
+        <hr class="divider">
+        <p style="text-align:center;color:var(--text-muted);font-size:.9rem;">
+            Zaten hesabınız var mı?
+            <a href="{% url 'users:login' %}" style="color:var(--primary);font-weight:600;">Giriş Yap</a>
+        </p>
+    </div>
+</div>
+{% endblock %}
