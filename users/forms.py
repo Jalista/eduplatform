@@ -32,7 +32,7 @@ class LoginForm(AuthenticationForm):
 class ProfileForm(forms.ModelForm):
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'email', 'bio', 'avatar']
+        fields = ['first_name', 'last_name', 'email', 'bio']
         labels = {
             'first_name': 'Ad',
             'last_name': 'Soyad',
