@@ -14,7 +14,6 @@ class User(AbstractUser):
     ]
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='student', verbose_name='Rol')
     bio = models.TextField(blank=True, verbose_name='Hakkında')
-    avatar = models.ImageField(upload_to='avatars/', blank=True, null=True, verbose_name='Profil Fotoğrafı')
 
     def is_teacher(self):
         return self.role == 'teacher'
